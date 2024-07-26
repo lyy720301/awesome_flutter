@@ -45,6 +45,11 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removeFavorite(WordPair pair) {
+    favorites.remove(pair);
+    notifyListeners();
+  }
+
 }
 
 // ...
@@ -183,6 +188,10 @@ class FavoritesPage extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.favorite),
             title: Text(pair.asLowerCase),
+            // 点击清除
+            onTap: () => {
+              appState.removeFavorite(pair),
+            }
           ),
       ],
     );
