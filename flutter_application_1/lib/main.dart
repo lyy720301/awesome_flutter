@@ -1,8 +1,12 @@
 // ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
 
+import 'dart:async';
+
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import './src/model/word.dart';
+import './src/db/data_source.dart';
 
 void main() {
   runApp(MyApp());
@@ -33,10 +37,37 @@ class MyAppState extends ChangeNotifier {
 
   GlobalKey? historyListKey;
 
-  void getNext() {
+  MyAppState() {
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    var completer = Completer<void>();
+    print('初始化。。。');
+    var db = await WordDataBase.getInstance();
+    var words = await db.words();
+    if (words.isNotEmpty) {
+      history.addAll(words
+          .map((Word word) => WordPair(word.first, word.second))
+          .toList()
+          .reversed
+          .toList());
+      print('history $history');
+
+      notifyListeners();
+    }
+    completer.future.whenComplete(() {});
+  }
+
+  void getNext() async {
     history.insert(0, current);
     var animatedList = historyListKey?.currentState as AnimatedListState?;
     animatedList?.insertItem(0);
+    // 持久化
+    var db = await WordDataBase.getInstance();
+    print('插入 $current');
+    await db.insertWord(
+        Word(first: current.first, second: current.second, like: 0));
     current = WordPair.random();
     notifyListeners();
   }
@@ -326,6 +357,7 @@ class _HistoryListViewState extends State<HistoryListView> {
   @override
   Widget build(BuildContext context) {
     final appState = context.watch<MyAppState>();
+    print('history list rebuild ${appState.history}');
     appState.historyListKey = _key;
 
     return ShaderMask(
@@ -340,6 +372,7 @@ class _HistoryListViewState extends State<HistoryListView> {
         initialItemCount: appState.history.length,
         itemBuilder: (context, index, animation) {
           final pair = appState.history[index];
+          print('Building item at index $index with pair $pair'); // 添加日志输出
           return SizeTransition(
             sizeFactor: animation,
             child: Center(
