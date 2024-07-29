@@ -50,9 +50,9 @@ class DocumentScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final (title, modified: lastmodified) = document.metadata; // Modify
     // final (title, :modified) = document.metadata; // Modify
-    final formattedModifiedDate = formatDate(lastmodified);            // Add this line
+    final formattedModifiedDate = formatDate(lastmodified); // Add this line
 
-    final blocks = document.blocks;
+    final blocks = document.getBlocks();
     return Scaffold(
       appBar: AppBar(
         title: Text(title), // Modify this line,
@@ -84,29 +84,25 @@ class BlockWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // TextStyle? textStyle;
-    // switch (block.type) {
-    //   case 'h1':
-    //     textStyle = Theme.of(context).textTheme.displayMedium;
-    //   case 'p' || 'checkbox':
-    //     textStyle = Theme.of(context).textTheme.bodyMedium;
-    //   case _:
-    //     textStyle = Theme.of(context).textTheme.bodySmall;
-    // }
-    // switch expression
-    TextStyle? textStyle; // Modify from here
-    textStyle = switch (block.type) {
-      'h1' => Theme.of(context).textTheme.displayMedium,
-      'p' || 'checkbox' => Theme.of(context).textTheme.bodyMedium,
-      _ => Theme.of(context).textTheme.bodySmall
-    };
-
     return Container(
       margin: const EdgeInsets.all(8),
-      child: Text(
-        block.text,
-        style: textStyle,
-      ),
+      child: switch (block) {
+        HeaderBlock(:final text) => Text(
+            text,
+            style: Theme.of(context).textTheme.displayMedium,
+          ),
+        ParagraphBlock(:final text) => Text(text),
+        CheckboxBlock(:final text, :var isChecked) => Row(
+            children: [
+              Checkbox(
+                  value: isChecked,
+                  onChanged: (_) {
+                    
+                  }),
+              Text(text),
+            ],
+          ),
+      },
     );
   }
 }
